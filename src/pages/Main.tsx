@@ -16,11 +16,12 @@ export function Main() {
     const [codeEditing, setCodeEditing] = useState<Code|null>(null)
 
     //
-    function ondragstart(model: Code, e: DragEvent<HTMLButtonElement>) {
+    const ondragstart = useCallback((model: Code, e: DragEvent<HTMLDivElement>) => {
         e.dataTransfer.dropEffect = 'move'
         setDragging(model)
-    }
+    }, []);
 
+    //
     const [indexToEdit, setIndexToEdit] = useState(-1)
     const droppedOn = useCallback((c: Code, index: number) => {
         if (!dragging) return
@@ -101,14 +102,14 @@ export function Main() {
                     <div className="collapse-content flex flex-wrap gap-2">
 
                         {/*button*/}
-                        {lib.snippets.map(code => <button
+                        {lib.snippets.map(code => <div
                             key={code.key}
                             className={clsx("btn btn-sm", 'btn-' + (code.theme || 'primary'))}
                             draggable={true}
                             onDragStart={e => ondragstart(code, e)}
                         >
                             <LuGripVertical/> {code.name}
-                        </button>)}
+                        </div>)}
 
                     </div>
                 </div>)}
