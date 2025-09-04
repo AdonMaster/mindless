@@ -1,5 +1,5 @@
 import './Main.css'
-import {type DragEvent, useState} from "react"
+import {type DragEvent, useCallback, useState} from "react"
 import {type Code, codeLibrary, root as ogRoot} from "@/data/Code.ts"
 import {CodeComponent} from "@/components/CodeComponent.tsx"
 import {LuGripVertical} from "react-icons/lu"
@@ -22,7 +22,7 @@ export function Main() {
     }
 
     const [indexToEdit, setIndexToEdit] = useState(-1)
-    function droppedOn(c: Code, index: number) {
+    const droppedOn = useCallback((c: Code, index: number) => {
         if (!dragging) return
 
         //
@@ -45,11 +45,11 @@ export function Main() {
             dragging.parent = c
             setCodeEditing(dragging)
         }
-    }
+    }, [dragging]);
 
-    function edit(code: Code) {
+    const edit = useCallback((code: Code) => {
         setCodeEditing(code)
-    }
+    }, []);
 
     //
     function codeSaved(c: Code|null)
@@ -70,11 +70,10 @@ export function Main() {
 
     }
 
-    function destroy(code: Code)
-    {
+    const destroy = useCallback((code: Code) => {
         if (! code.parent) return
         setRoot(prev => Chain.remove(prev, code.id))
-    }
+    }, []);
 
     //
     return <div>

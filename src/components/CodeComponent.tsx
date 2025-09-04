@@ -2,13 +2,13 @@ import type {Code} from "@/data/Code.ts"
 import clsx from "clsx"
 import {LuGripVertical, LuX} from "react-icons/lu"
 import {AnimatePresence, motion} from 'framer-motion'
-import {type DragEvent, type MouseEvent, useState} from "react"
+import {type DragEvent, memo, type MouseEvent, useCallback, useMemo, useState} from "react"
 import _debounce from 'lodash.debounce'
 import {DragSeparator} from "@/components/DragSeparator.tsx"
 import Num from "@/helpers/Num.ts"
 
 //
-export function CodeComponent(p: {
+export const CodeComponent = memo(function(p: {
     code: Code,
     droppedOn: (code: Code, index: number)=>void, edit: (code: Code)=>void,
     destroy: (code: Code)=>void,
@@ -17,30 +17,37 @@ export function CodeComponent(p: {
 
     //
     const [isDragging, setIsDragging] = useState(false)
-    const setIsDraggingDebounced = _debounce(setIsDragging, 25)
 
     //
-    function ondragstart(e: DragEvent<HTMLDivElement>) {
+    const setIsDraggingDebounced = useMemo(
+        () => _debounce(v => setIsDragging(v), 25),
+        [] // The empty dependency array ensures the debounced function is only created once.
+    )
+
+    //
+    const ondragstart = useCallback((e: DragEvent<HTMLDivElement>) => {
         e.stopPropagation()
         e.dataTransfer.dropEffect = 'move'
         p.setDragging(p.code)
-    }
-    function ondragover(e: DragEvent<HTMLDivElement>) {
+    }, [p]);
+    const ondragover = useCallback((e: DragEvent<HTMLDivElement>) => {
         e.preventDefault()
         e.stopPropagation()
         e.dataTransfer.dropEffect = 'move'
         setIsDraggingDebounced(true)
-    }
-    function ondragenter(e: DragEvent<HTMLDivElement>) {
+
+    }, [setIsDraggingDebounced]);
+    const ondragenter = useCallback((e: DragEvent<HTMLDivElement>) => {
         e.preventDefault()
         e.dataTransfer.dropEffect = 'move'
         setIsDraggingDebounced(true)
-    }
-    function ondragleave(e: DragEvent<HTMLDivElement>) {
+
+    }, [setIsDraggingDebounced]);
+    const ondragleave = useCallback((e: DragEvent<HTMLDivElement>) => {
         e.preventDefault()
         setIsDraggingDebounced(false)
-    }
-    function ondrop(e: DragEvent<HTMLDivElement>) {
+    }, [setIsDraggingDebounced]);
+    const ondrop = useCallback((e: DragEvent<HTMLDivElement>) => {
         e.stopPropagation()
         e.preventDefault()
         setIsDraggingDebounced(false)
@@ -52,18 +59,20 @@ export function CodeComponent(p: {
             index = Num.toInt((e.target as HTMLElement).dataset['index'], -1)
         }
         p.droppedOn(p.code, index)
-    }
+
+    }, [p, setIsDraggingDebounced]);
+
 
     //
-    function edit(e: MouseEvent<HTMLAnchorElement>) {
+    const edit = useCallback((e: MouseEvent<HTMLAnchorElement>) => {
         e.preventDefault()
         p.edit(p.code)
-    }
+    }, [p]);
 
-    function destroy(e: MouseEvent<HTMLAnchorElement>) {
+    const destroy = useCallback((e: MouseEvent<HTMLAnchorElement>) => {
         e.preventDefault()
         p.destroy(p.code)
-    }
+    }, [p]);
 
     //
     return <div
@@ -105,7 +114,7 @@ export function CodeComponent(p: {
         {/*divider*/}
         {!!p.code.children.length && <hr className={'opacity-10 my-2'}/>}
 
-        {/*drop zone*/}
+        {/*separator drop zone*/}
         {p.code.children.length > 0 && <DragSeparator dataIndex={0}/>}
 
         {/*children*/}
@@ -117,12 +126,16 @@ export function CodeComponent(p: {
                 exit={{ opacity: 0, x: -20 }}
                 layoutId={code.id}
             >
-                <CodeComponent code={code} droppedOn={p.droppedOn} edit={p.edit} destroy={p.destroy} setDragging={p.setDragging}/>
+                <CodeComponent
+                    code={code}
+                    droppedOn={p.droppedOn} edit={p.edit} destroy={p.destroy} setDragging={p.setDragging}
+                />
 
-                {/*drop zone*/}
+                {/*separator drop zone*/}
                 <DragSeparator dataIndex={idx + 1}/>
+
             </motion.div>)}
         </AnimatePresence>
     </div>
 
-}
+})
