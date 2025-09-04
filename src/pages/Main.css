@@ -1,0 +1,8 @@
+@import "@/style.css";
+
+#title-bar {
+    -webkit-app-region: drag;
+    & #close {
+        -webkit-app-region: no-drag;
+    }
+}
