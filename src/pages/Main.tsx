@@ -85,12 +85,12 @@ export function Main() {
             <div id="editor" className={'p-3 grow'}>
                 <CodeComponent
                     key={root.id}
-                    code={root} droppedOn={droppedOn} edit={edit} destroy={destroy} setDragging={setDragging}
+                    code={root} droppedOn={droppedOn} edit={edit} destroy={destroy} dragging={dragging} setDragging={setDragging}
                 />
             </div>
 
             {/*lib*/}
-            <div id="lib" className={'p-3 rounded-lg hidden md:flex w-sm bg-neutral-600'}>
+            <div id="lib" className={'p-3 rounded-lg hidden md:flex gap-3 md:flex-col w-sm bg-neutral-600'}>
                 {codeLibrary.map(lib => <div
                     key={lib.key}
                     className="collapse bg-base-100 border-base-300 border"

@@ -91,21 +91,6 @@ export default {
 
     move<T extends ChainNode<T>>(root: T, originId: string, destinationParentId: string, destinationIndex: number): T
     {
-
-        // // is dragging parent of some deep child
-        // let cur: Code|null = c
-        // while (cur) {
-        //     if (cur.id == dragging.id) return
-        //     cur = cur.parent
-        // }
-        // //
-        // if (! dragging.parent) return
-        //
-        // //
-        // const newRoot = Chain.reconcile(root)
-
-
-
         const origin = this.find(root, originId)
         if (! origin) return root
 

@@ -1,12 +1,13 @@
-import {type ChangeEvent, useEffect, useRef, useState} from "react"
-import type {Code} from "@/data/Code.ts"
+import {type ChangeEvent, useCallback, useEffect, useRef, useState} from "react"
+import type {Code, CodeParam} from "@/data/Code.ts"
 import {LuCheck} from "react-icons/lu"
+import {CodeEditParams} from "@/components/CodeEditParams.tsx";
 
-export function DialogCodeEdit(p: {code: Code|null, setCode: (Code: Code|null)=>void}) {
+export function DialogCodeEdit(p: { code: Code | null, setCode: (Code: Code | null) => void }) {
 
     //
     const refDialog = useRef<HTMLDialogElement>(null)
-    const [local, setLocal] = useState<Code|null>(null)
+    const [local, setLocal] = useState<Code | null>(null)
 
     //
     const isValid = local?.name?.length ?? 0
@@ -27,20 +28,33 @@ export function DialogCodeEdit(p: {code: Code|null, setCode: (Code: Code|null)=>
     }, [p]);
 
     //
-    function nameChanged(e: ChangeEvent<HTMLInputElement>) {
-        if (! local) return
+    const nameChanged = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        if (!local) return
         setLocal({...local, name: e.target.value})
-    }
-    function descChanged(e: ChangeEvent<HTMLTextAreaElement>) {
-        if (! local) return
+    }, [local]);
+
+    const descChanged = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
+        if (!local) return
         setLocal({...local, desc: e.target.value})
-    }
+    }, [local]);
+
+    const onParamDelta = useCallback((param: CodeParam) => {
+        setLocal(prev => {
+            if (! prev) return null
+            const params = prev.params.map(ma => {
+                if (param.name == ma.name) return param
+                return ma
+            })
+            return {...prev, params}
+        })
+    }, []);
 
     //
     function save() {
         p.setCode(local)
         refDialog.current?.close()
     }
+
 
     //
     return <>
@@ -65,11 +79,17 @@ export function DialogCodeEdit(p: {code: Code|null, setCode: (Code: Code|null)=>
 
                     <legend className="fieldset-legend">Description</legend>
                     <textarea
-                        className="textarea h-24 w-full resize-none" placeholder=""
+                        className="textarea h-12 w-full resize-none" placeholder=""
                         value={local?.desc ?? ''}
                         onChange={descChanged}
                     ></textarea>
                 </fieldset>
+
+                {/*params*/}
+                {p.code?.params && <div>
+                    <div className="divider"></div>
+                    <CodeEditParams params={p.code.params} onParamDelta={onParamDelta}/>
+                </div>}
 
                 <div className="modal-action">
                     <button

@@ -1,5 +1,6 @@
 {
   "import": "tsx",
   "extensions": ["ts"],
+  "require": ["./mocha-resolve-alias.js"],
   "spec": "tests/**/*.ts"
 }
