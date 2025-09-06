@@ -1,12 +1,13 @@
 import './Main.css'
 import {type DragEvent, useCallback, useState} from "react"
-import {type Code, codeLibrary, root as ogRoot} from "@/data/Code.ts"
+import {type Code} from "@/data/Code.ts"
 import {CodeComponent} from "@/components/CodeComponent.tsx"
 import {LuGripVertical} from "react-icons/lu"
 import clsx from "clsx"
 import {DialogCodeEdit} from "@/components/DialogCodeEdit.tsx"
 import Chain from "@/helpers/Chain.ts"
 import {v4 as uuid} from 'uuid'
+import {codeLibrary, root as ogRoot} from "@/data/CodeLibrary.ts"
 
 //
 export function Main() {
@@ -85,7 +86,8 @@ export function Main() {
             <div id="editor" className={'p-3 grow'}>
                 <CodeComponent
                     key={root.id}
-                    code={root} droppedOn={droppedOn} edit={edit} destroy={destroy} dragging={dragging} setDragging={setDragging}
+                    code={root} droppedOn={droppedOn} edit={edit} destroy={destroy}
+                    dragging={dragging} setDragging={setDragging}
                 />
             </div>
 

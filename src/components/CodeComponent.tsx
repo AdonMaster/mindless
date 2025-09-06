@@ -92,6 +92,23 @@ export const CodeComponent = memo(function(p: {
     }, [p]);
 
     //
+    function isStackValid(index: number): boolean
+    {
+        const cur = p.code.children[index]
+
+        //
+        if (cur.exit == 'pass_through') return true
+
+        //
+        for (let cont=index-1; cont>=0; cont--) {
+            const last = p.code.children[cont]
+            if (last.exit == 'pass_through') continue
+            return cur.entry == last.exit
+        }
+        return p.code.entry == cur.entry
+    }
+
+    //
     return <div
         className={clsx(
             'transition-colors',
@@ -157,6 +174,9 @@ export const CodeComponent = memo(function(p: {
                 exit={{ opacity: 0, x: -20 }}
                 layoutId={code.id}
             >
+                {/*stacking error*/}
+                {!isStackValid(idx) && <div className={'h-[4px] bg-[red]'}></div>}
+
                 <CodeComponent
                     code={code}
                     droppedOn={p.droppedOn} edit={p.edit} destroy={p.destroy} dragging={p.dragging} setDragging={p.setDragging}

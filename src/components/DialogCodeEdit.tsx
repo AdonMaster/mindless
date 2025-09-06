@@ -79,7 +79,7 @@ export function DialogCodeEdit(p: { code: Code | null, setCode: (Code: Code | nu
 
                     <legend className="fieldset-legend">Description</legend>
                     <textarea
-                        className="textarea h-12 w-full resize-none" placeholder=""
+                        className="textarea w-full resize-none" placeholder=""
                         value={local?.desc ?? ''}
                         onChange={descChanged}
                     ></textarea>
