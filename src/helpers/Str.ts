@@ -8,6 +8,15 @@ export default {
         return this._random(n, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
     },
 
+    randomVarName(n: number) {
+        const regex = /^([a-z]|[a-z_][a-z0-9_]*[a-z0-9])$/
+        const fn = () => this._random(n, 'abcdefghijklmnopqrstuvwxyz0123456789_')
+        //
+        let cur = fn()
+        while (! regex.test(cur)) cur = fn()
+        return cur
+    },
+
     _random(n: number, charSet: string) {
         let r = '';
         for (let i = 0; i < n; i++) {

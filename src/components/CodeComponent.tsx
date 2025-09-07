@@ -7,6 +7,9 @@ import _debounce from 'lodash.debounce'
 import {DragSeparator} from "@/components/DragSeparator.tsx"
 import {Num} from "@/helpers/Num.ts"
 import {Switch} from "@/helpers/Switch.ts";
+import {useRunContext} from "@/contexts/RunContext.ts"
+import {FaChevronRight, FaCode, FaDotCircle, FaPlay, FaStop} from "react-icons/fa"
+import {BounceLoader, MoonLoader} from 'react-spinners'
 
 //
 export const CodeComponent = memo(function(p: {
@@ -20,6 +23,31 @@ export const CodeComponent = memo(function(p: {
     //
     type IsDraggingStatus = 'none'|'allow'|'deny'
     const [isDragging, setIsDragging] = useState<IsDraggingStatus>('none')
+    const { isRunning, isRunningInto, run, stop, isAborting } = useRunContext()
+
+    // computed
+    const isRunningStatus = useMemo<
+        'not_running_i_can'|'not_running_i_cannot'|'running_me'|'running_parent'|'running_not_related'
+    >(() =>
+    {
+        const isParentRunning = (c: Code, runningId: string): boolean => {
+            let cur = c.parent
+            while (cur) {
+                if (cur.id == runningId) return true
+                cur = cur.parent
+            }
+            return false
+        }
+        //
+        if (isRunning) {
+            if (isRunning.id == p.code.id) return 'running_me'
+            if (isParentRunning(p.code, isRunning.id)) return 'running_parent'
+            return 'running_not_related'
+        } else {
+            if (p.code.config?.isRunnable == true) return 'not_running_i_can'
+            return 'not_running_i_cannot'
+        }
+    }, [p, isRunning]);
 
     //
     const setIsDraggingDebounced = useMemo<(s: IsDraggingStatus)=>void>(
@@ -37,9 +65,10 @@ export const CodeComponent = memo(function(p: {
     //
     const ondragstart = useCallback((e: DragEvent<HTMLDivElement>) => {
         e.stopPropagation()
+        if (isRunning) { return e.preventDefault() }
         e.dataTransfer.dropEffect = 'move'
         p.setDragging(p.code)
-    }, [p]);
+    }, [p, isRunning]);
     const ondragover = useCallback((e: DragEvent<HTMLDivElement>) => {
         e.stopPropagation()
 
@@ -68,6 +97,8 @@ export const CodeComponent = memo(function(p: {
     const ondrop = useCallback((e: DragEvent<HTMLDivElement>) => {
         e.stopPropagation()
         e.preventDefault()
+
+        //
         setIsDraggingDebounced('none')
 
         //
@@ -78,18 +109,22 @@ export const CodeComponent = memo(function(p: {
         }
         p.droppedOn(p.code, index)
 
-    }, [p, setIsDraggingDebounced]);
+    }, [p, setIsDraggingDebounced, isRunning]);
 
     //
-    const edit = useCallback((e: MouseEvent<HTMLAnchorElement>) => {
+    const edit = useCallback((e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
+        if (isRunning) return {}
+
         p.edit(p.code)
-    }, [p]);
+    }, [p, isRunning]);
 
     const destroy = useCallback((e: MouseEvent<HTMLAnchorElement>) => {
         e.preventDefault()
+        if (isRunning) return {}
+
         p.destroy(p.code)
-    }, [p]);
+    }, [p, isRunning]);
 
     //
     function isStackValid(index: number): boolean
@@ -108,6 +143,11 @@ export const CodeComponent = memo(function(p: {
         return p.code.entry == cur.entry
     }
 
+    const tryToRun = useCallback(() => {
+        if (isRunningStatus == 'running_me') return stop()
+        if (isRunningStatus == 'not_running_i_can') return run(p.code)
+    }, [isRunningStatus, stop, p.code, run])
+
     //
     return <div
         className={clsx(
@@ -124,20 +164,45 @@ export const CodeComponent = memo(function(p: {
     >
 
         {/*title bar*/}
-        <div className={'flex items-start gap-2'}>
+        <div className={'flex items-center gap-2'}>
+
+            {/*running into*/}
+            {
+                isRunningInto?.id == p.code.id
+                ? <FaChevronRight color={'orange'}/>
+                : <FaCode color={'#ffffff10'}/>
+            }
+
+            {/*run*/}
+            <a
+                href={'#/run'}
+                className={clsx()}
+                onClick={tryToRun}
+            >
+                {isRunningStatus == 'running_me' && <FaStop color={isAborting ? 'gray' : 'red'}/>}
+                {isRunningStatus == 'running_parent' && <MoonLoader size={12} color={'lime'}/>}
+                {isRunningStatus == 'running_not_related' && <BounceLoader size={16} color={'#ffffff50'}/>}
+                {isRunningStatus == 'not_running_i_can' && <FaPlay color={'green'}/>}
+                {isRunningStatus == 'not_running_i_cannot' && <FaDotCircle color={'grey'}/>}
+            </a>
 
             {/*grip*/}
-            <a
-                href={'#/'} onClick={edit}
-                className="badge badge-ghost rounded badge-secondary"
+            <button
+                onClick={edit}
+                className="badge badge-ghost rounded badge-secondary cursor-pointer"
+                draggable={true}
             >
                 <LuGripVertical/>
                 {p.code.key}
-            </a>
+            </button>
 
             {/*h3*/}
             <div className={'grow'}>
-                <h3 className={'font-semibold'}>{p.code.name} </h3>
+
+                <h3 className={'font-semibold'}>
+                    {!['input', 'fn'].includes(p.code.key.split(':')[0]) && p.code.name}
+                </h3>
+
                 {!!p.code.desc && <p className="text-xs opacity-60">{p.code.desc}</p>}
 
                 {/*entries*/}
@@ -151,8 +216,8 @@ export const CodeComponent = memo(function(p: {
             </div>
 
             {/*close*/}
-            {p.code.key != 'root' && <a
-                href="#/close" className={'text-neutral-600 hover:text-neutral-300'}
+            {p.code.id != 'root' && <a
+                href={"#/close"} className={'text-neutral-600 hover:text-neutral-300'}
                 onClick={destroy}
             >
                 <LuX/>

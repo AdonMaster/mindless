@@ -8,6 +8,10 @@ import {DialogCodeEdit} from "@/components/DialogCodeEdit.tsx"
 import Chain from "@/helpers/Chain.ts"
 import {v4 as uuid} from 'uuid'
 import {codeLibrary, root as ogRoot} from "@/data/CodeLibrary.ts"
+import {useRunContext} from "@/contexts/RunContext.ts"
+import {CodeConsole} from "@/components/CodeConsole.tsx"
+import Str from "@/helpers/Str.ts"
+import {useResizable} from "react-resizable-layout"
 
 //
 export function Main() {
@@ -15,6 +19,7 @@ export function Main() {
     const [root, setRoot] = useState<Code>({...ogRoot})
     const [dragging, setDragging] = useState<Code|null>(null)
     const [codeEditing, setCodeEditing] = useState<Code|null>(null)
+    const {isRunning} = useRunContext()
 
     //
     const ondragstart = useCallback((model: Code, e: DragEvent<HTMLDivElement>) => {
@@ -44,8 +49,8 @@ export function Main() {
 
         // new
         else {
-            dragging.parent = c
-            setCodeEditing(dragging)
+            const keyPrefix = dragging.key.split(':')[0]
+            setCodeEditing({...dragging, ...{name: keyPrefix + '_' + Str.randomVarName(6), parent: c}})
         }
     }, [dragging]);
 
@@ -77,13 +82,26 @@ export function Main() {
         setRoot(prev => Chain.remove(prev, code.id))
     }, []);
 
-    //
-    return <div>
+    // layout
+    const { position:footerHeight, separatorProps:footerSeparatorProps } = useResizable({
+        axis: "y", reverse: true, min: 100
+    })
 
-        <div className={'flex gap-2 m-3 items-start'}>
+    //
+    return <div className={'h-full flex flex-col'}>
+
+        {/*header*/}
+        <header className=" text-white p-4">
+            header
+        </header>
+
+        {/*main*/}
+        <main id="editor" className={clsx(
+            'grow p-3 grid grid-cols-[1fr_300px] gap-2 overflow-y-scroll',
+        )}>
 
             {/*editor*/}
-            <div id="editor" className={'p-3 grow'}>
+            <div className="overflow-y-visible ">
                 <CodeComponent
                     key={root.id}
                     code={root} droppedOn={droppedOn} edit={edit} destroy={destroy}
@@ -91,8 +109,10 @@ export function Main() {
                 />
             </div>
 
-            {/*lib*/}
-            <div id="lib" className={'p-3 rounded-lg hidden md:flex gap-3 md:flex-col w-sm bg-neutral-600'}>
+            {/*panel lib*/}
+            <div id="lib" className={clsx(
+                '',
+            )}>
                 {codeLibrary.map(lib => <div
                     key={lib.key}
                     className="collapse bg-base-100 border-base-300 border"
@@ -107,7 +127,7 @@ export function Main() {
                         {lib.snippets.map(code => <div
                             key={code.key}
                             className={clsx("btn btn-sm", 'btn-' + (code.theme || 'primary'))}
-                            draggable={true}
+                            draggable={!isRunning}
                             onDragStart={e => ondragstart(code, e)}
                         >
                             <LuGripVertical/> {code.name}
@@ -117,9 +137,17 @@ export function Main() {
                 </div>)}
             </div>
 
+        </main>
+
+        {/*layout-separator-handle*/}
+        <div id="grid-separator" className={'h-[20px] bg-green-950'} {...footerSeparatorProps}>
         </div>
 
-        {/*edit*/}
+        <footer className={'shrink-0'} style={{height: footerHeight}}>
+            <CodeConsole/>
+        </footer>
+
+        {/*modals*/}
         <DialogCodeEdit code={codeEditing} setCode={codeSaved}/>
     </div>
 

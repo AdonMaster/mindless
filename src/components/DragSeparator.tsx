@@ -12,7 +12,7 @@ export function DragSeparator(p: {dataIndex: number}) {
             onDragEnter={() => setIsDragging(true)}
             onDragLeave={() => setIsDragging(false)}
             onDrop={() => setIsDragging(false)}
-            className={clsx('h-[8px] bg-neutral-300 transition-opacity', isDragging ? 'opacity-100' : 'opacity-0')}
+            className={clsx('h-[14px] bg-neutral-300 transition-opacity', isDragging ? 'opacity-100' : 'opacity-0')}
         >
 
         </div>

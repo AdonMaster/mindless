@@ -1,41 +1,38 @@
 import type {CodeParam} from "@/data/Code.ts";
-import {type ChangeEvent, Fragment, memo, useCallback, useEffect, useState} from "react"
+import {Fragment, memo, useCallback, useEffect, useState} from "react"
 import {Num} from "@/helpers/Num.ts"
 import {DayPicker} from "react-day-picker"
+import {Switch} from "@/helpers/Switch.ts"
 
 export const CodeEditParams = memo((p: {
     params: CodeParam[], onParamDelta: (param: CodeParam) => void
 })=> {
 
-    // string
-    const paramStringChanged = useCallback((param: CodeParam, e: ChangeEvent<HTMLInputElement>) => {
-        p.onParamDelta({...param, value: e.target.value})
-    }, [p]);
-
-    // number
-    const paramNumberChanged = useCallback((param: CodeParam, e: ChangeEvent<HTMLInputElement>) => {
-        const v = Num.normalize(e.target.value)
-        p.onParamDelta({...param, value: v})
-    }, [p]);
-
-    // date
-    const [localDates, setLocalDates] = useState<Record<string, Date|undefined>>({})
-    const [localMonths, setLocalMonths] = useState<Record<string, Date|undefined>>({})
+    // pre-populate
+    const [local, setLocal] = useState<Record<string, unknown|undefined>>({})
     useEffect(() => {
-        const initDates: Record<string, Date|undefined> = {}
-        const initMonths: Record<string, Date|undefined> = {}
-        p.params
-            .filter(fi => fi.type == 'date')
-            .forEach(fo => {
-                initDates[fo.name] = fo.value as Date|undefined
-                initMonths[fo.name] = fo.value as Date|undefined
-            })
-        setLocalDates(initDates)
-        setLocalMonths(initMonths)
+        setLocal(() => {
+            const res: Record<string, unknown|undefined> = {}
+            for (const fe of p.params) {
+                res[fe.name] = fe.value
+                if (fe.type == 'date') res[fe.name+'|month'] = fe.value
+            }
+            return res
+        })
     }, [p])
-    const paramDateChanged = useCallback((param: CodeParam, dt: Date|undefined) => {
-        setLocalDates(prevState => ({...prevState, ...{[param.name]: dt}}))
-        p.onParamDelta({...param, value: dt})
+
+    //
+    const paramChanged = useCallback((param: CodeParam, elementValue: unknown, publish: boolean) =>
+    {
+        if (publish) {
+            const v = Switch.f(param.type, elementValue)
+                .case('number', () => Num.float(elementValue, 0))
+                .get()
+            setLocal(prev => ({...prev, ...{[param.name]: v}}))
+            p.onParamDelta({...param, value: v})
+        } else {
+            setLocal(prev => ({...prev, ...{[param.name]: elementValue}}))
+        }
     }, [p]);
 
     //
@@ -47,14 +44,16 @@ export const CodeEditParams = memo((p: {
                 {/*string*/}
                 {param.type == 'string' && <input
                     defaultValue={param.value as string}
-                    onBlur={e => paramStringChanged(param, e)}
+                    onBlur={e => paramChanged(param, e.target.value, true)}
+                    onChange={e => paramChanged(param, e.target.value, false)}
                     type="text" className="input w-full" placeholder=""
                 />}
 
                 {/*number*/}
                 {param.type == 'number' && <input
-                    defaultValue={Num.normalize(param.value)}
-                    onBlur={e => paramNumberChanged(param, e)}
+                    defaultValue={param.value as number}
+                    onBlur={e => paramChanged(param, e.target.value, true)}
+                    onChange={e => paramChanged(param, e.target.value, false)}
                     type="text" className="input w-full" placeholder=""
                 />}
 
@@ -63,13 +62,10 @@ export const CodeEditParams = memo((p: {
                     <DayPicker
                         className="react-day-picker"
                         mode="single"
-                        month={localMonths[param.name]}
-                        onMonthChange={mo => setLocalMonths(prev => ({...prev, ...{[param.name]: mo}}))}
-                        selected={localDates[param.name]}
-                        animate={false}
-                        onSelect={e => {
-                            paramDateChanged(param, e)
-                        }}
+                        month={local[param.name+'|month'] as Date}
+                        onMonthChange={mo => setLocal(prev => ({...prev, ...{[param.name+'|month']: mo}}))}
+                        selected={local[param.name] as Date|undefined}
+                        onSelect={e => paramChanged(param, e, true)}
                     />
                 </div>}
 

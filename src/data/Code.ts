@@ -9,7 +9,8 @@ export type CodeParam<T=unknown> = {
     type: CodeType,
     value: T
 }
-export function normalizeParamValue(c?: CodeParam): string {
+export function normalizeParamValue(c?: CodeParam): string
+{
     const empty = '~empty~'
     if (!c) return empty
     return Switch.f(c.type, empty)
@@ -21,6 +22,11 @@ export function normalizeParamValue(c?: CodeParam): string {
                 .get() ?? empty
         )
         .get()
+}
+
+//
+export type CodeConfig = {
+    isRunnable: boolean
 }
 
 //
@@ -37,14 +43,15 @@ export interface Code {
     params: CodeParam[]
     exit: CodeType
     extra?: unknown
+    config?: CodeConfig
 }
 
 export function newCode(
     id: string, key: string, name: string, parent: Code | null, children: Code[], theme: string, accept: string[],
-    entry: CodeType, exit: CodeType, params: CodeParam[], extra?: unknown
+    entry: CodeType, exit: CodeType, params: CodeParam[], extra?: unknown, config?: CodeConfig
 ): Code {
     return {
-        id, key, name, parent, children, accept, theme, entry, exit, params, extra
+        id, key, name, parent, children, accept, theme, entry, exit, params, extra, config
     }
 }
 

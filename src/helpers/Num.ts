@@ -31,6 +31,7 @@ class NumClass {
     }
 
     float(s: unknown, def: number): number {
+        if (typeof s == 'number') return s
         if (!s) return def
         const res = parseFloat(this.convertToEn(s, '0'))
         if (isNaN(res)) return def

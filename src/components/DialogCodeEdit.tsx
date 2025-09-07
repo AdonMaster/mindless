@@ -1,7 +1,8 @@
 import {type ChangeEvent, useCallback, useEffect, useRef, useState} from "react"
 import type {Code, CodeParam} from "@/data/Code.ts"
 import {LuCheck} from "react-icons/lu"
-import {CodeEditParams} from "@/components/CodeEditParams.tsx";
+import {CodeEditParams} from "@/components/CodeEditParams.tsx"
+import clonedeep from 'lodash.clonedeep'
 
 export function DialogCodeEdit(p: { code: Code | null, setCode: (Code: Code | null) => void }) {
 
@@ -21,7 +22,7 @@ export function DialogCodeEdit(p: { code: Code | null, setCode: (Code: Code | nu
         })
 
         if (p.code) {
-            setLocal({...p.code})
+            setLocal(clonedeep(p.code))
             refDialog.current?.showModal()
         }
 

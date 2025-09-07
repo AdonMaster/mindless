@@ -1,17 +1,19 @@
 //
 import {type Code, newCode} from "@/data/Code.ts"
-import {v4 as uuid} from "uuid"
 import {Op} from "@/helpers/Op.ts"
 
 
 //
 const scope = newCode('', 'scope', 'scope', null, [], 'primary',
-    ['var', 'scope', 'fn'], 'void', 'computed', []
+    ['var', 'scope', 'fn'], 'void', 'void', [], null, {
+        isRunnable: true
+    }
 )
 
 //
 export const root: Code = Op.with({...scope}).also(it => {
-    it.id = uuid()
+    it.id = 'root'
+    it.key = 'scope'
     it.name = 'root'
 }).forceGet()
 
@@ -25,15 +27,15 @@ export const codeLibrary: Lib[] = [
         key: 'struct', title: 'Structure', snippets: [
 
             // scope
-            newCode('', 'scope', 'scope', null, [], 'primary',
-                ['var', 'scope', 'fn'], 'void', 'computed', []
-            ),
+            scope,
 
             // var
             newCode(
                 '', 'var', 'var', null, [], 'success',
                 ['fn', 'input'],
-                'void', 'computed', []
+                'void', 'void', [], null, {
+                    isRunnable: true
+                }
             ),
         ],
     },
@@ -42,7 +44,7 @@ export const codeLibrary: Lib[] = [
 
             // input text
             newCode(
-                '', 'input:string', 'input:string', null, [], 'warning',
+                '', 'input:str', 'input:str', null, [], 'warning',
                 [],
                 'void', 'string', [
                     {name: 'value', type: 'string', value: ''}
@@ -74,7 +76,11 @@ export const codeLibrary: Lib[] = [
                 '', 'fn:upper', 'fn:upper', null, [], 'secondary',
                 [],
                 'string', 'string', [],
-                'this.toUpperCase()'
+                `
+                async function main(p) {
+                    return p.value.toUpperCase()
+                }
+                `
             ),
         ]
     },
@@ -83,16 +89,15 @@ export const codeLibrary: Lib[] = [
         key: 'system', title: 'System', snippets: [
             // input text
             newCode(
-                '', 'fn:sleep', 'fn:sleep', null, [], 'secondary',
+                '', 'fn:sleep', 'sleep', null, [], 'secondary',
                 [],
                 'void', 'pass_through', [
                     {name: 'interval', type: 'number', value: 1000}
                 ],
                 `
-                    async sleep(interval: number): Promise<void> {
-                        return new Promise(res => setTimeout(res, interval))
+                    async function main(p) {
+                        return new Promise(res => setTimeout(res, p.params.interval))
                     }
-                    await sleep({{interval}})
                 `
             ),
         ]
